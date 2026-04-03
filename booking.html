@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Бронирование мест</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;600;700&family=Onest:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #17171e;
+    --surface2: #1e1e28;
+    --border: #2a2a38;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --free: #1e2a1e;
+    --free-border: #2d4a2d;
+    --free-text: #7ec87e;
+    --booked: #2a1e1e;
+    --booked-border: #4a2d2d;
+    --booked-text: #c87e7e;
+    --blocked: #1e1e1e;
+    --blocked-border: #2a2a2a;
+    --blocked-text: #444;
+    --mine: #1e1e2a;
+    --mine-border: #4a4a8a;
+    --mine-text: #9090e0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Onest', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 20%, rgba(108,99,255,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 80%, rgba(255,101,132,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 32px 20px 60px; }
+
+  /* HEADER */
+  header { margin-bottom: 40px; }
+  .logo { font-family: 'Unbounded', sans-serif; font-size: 11px; font-weight: 300; letter-spacing: 0.3em; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+  h1 { font-family: 'Unbounded', sans-serif; font-size: clamp(22px, 4vw, 34px); font-weight: 700; line-height: 1.1; }
+  h1 span { color: var(--accent); }
+
+  /* DATE STRIP */
+  .date-nav {
+    display: flex; align-items: center; gap: 12px;
+    margin: 28px 0 32px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 12px 16px;
+  }
+  .date-nav button {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); width: 36px; height: 36px;
+    border-radius: 10px; cursor: pointer; font-size: 16px;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .date-nav button:hover { border-color: var(--accent); color: var(--accent); }
+  .date-strip { display: flex; gap: 8px; overflow-x: auto; flex: 1; scrollbar-width: none; }
+  .date-strip::-webkit-scrollbar { display: none; }
+  .date-chip {
+    flex-shrink: 0; padding: 8px 14px; border-radius: 10px;
+    background: var(--surface2); border: 1px solid var(--border);
+    cursor: pointer; text-align: center; transition: all 0.2s;
+  }
+  .date-chip .wd { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+  .date-chip .d { font-size: 16px; font-weight: 600; font-family: 'Unbounded', sans-serif; }
+  .date-chip:hover { border-color: var(--accent); }
+  .date-chip.active { background: var(--accent); border-color: var(--accent); }
+  .date-chip.active .wd { color: rgba(255,255,255,0.7); }
+
+  /* NAME INPUT */
+  .name-row {
+    display: flex; gap: 12px; align-items: center;
+    margin-bottom: 28px;
+  }
+  .name-row label { font-size: 12px; color: var(--muted); white-space: nowrap; font-family: 'Unbounded', sans-serif; letter-spacing: 0.05em; }
+  .name-input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 16px; border-radius: 12px;
+    font-family: 'Onest', sans-serif; font-size: 15px; outline: none;
+    transition: border-color 0.2s;
+  }
+  .name-input:focus { border-color: var(--accent); }
+  .name-input::placeholder { color: var(--muted); }
+
+  /* ROOM LABEL */
+  .room-label {
+    font-family: 'Unbounded', sans-serif; font-size: 10px; letter-spacing: 0.2em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .room-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ROOM */
+  .room-wrap { display: flex; gap: 0; }
+  .room {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    position: relative;
+  }
+
+  .cabinet-label {
+    position: absolute; right: -48px; top: 50%; transform: translateY(-50%);
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 0 12px 12px 0; border-left: none;
+    padding: 12px 10px; writing-mode: vertical-rl;
+    font-size: 11px; font-family: 'Unbounded', sans-serif;
+    letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .cabinet-arrow { font-size: 14px; writing-mode: horizontal-tb; }
+
+  /* GRID */
+  .seats-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+
+  /* SEAT */
+  .seat {
+    aspect-ratio: 4/3;
+    border-radius: 14px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(.4,0,.2,1);
+    position: relative;
+    user-select: none;
+    border: 1.5px solid;
+    gap: 4px;
+  }
+  .seat-num {
+    font-family: 'Unbounded', sans-serif; font-size: 18px; font-weight: 600; line-height: 1;
+  }
+  .seat-name { font-size: 10px; font-weight: 500; text-align: center; padding: 0 6px; letter-spacing: 0.03em; line-height: 1.3; }
+
+  /* STATES */
+  .seat.free {
+    background: var(--free); border-color: var(--free-border); color: var(--free-text);
+  }
+  .seat.free:hover {
+    background: rgba(46,90,46,0.5); border-color: #4a7a4a;
+    transform: translateY(-3px); box-shadow: 0 8px 24px rgba(126,200,126,0.15);
+  }
+  .seat.booked {
+    background: var(--booked); border-color: var(--booked-border); color: var(--booked-text);
+    cursor: default;
+  }
+  .seat.mine {
+    background: var(--mine); border-color: var(--mine-border); color: var(--mine-text);
+    cursor: pointer;
+  }
+  .seat.mine:hover {
+    background: rgba(80,80,160,0.4); border-color: #7070c0;
+    transform: translateY(-2px); box-shadow: 0 6px 20px rgba(108,99,255,0.2);
+  }
+  .seat.blocked {
+    background: var(--blocked); border-color: var(--blocked-border); color: var(--blocked-text);
+    cursor: not-allowed; opacity: 0.5;
+  }
+
+  .seat .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    position: absolute; top: 10px; right: 10px;
+  }
+  .seat.free .dot { background: var(--free-text); }
+  .seat.booked .dot { background: var(--booked-text); }
+  .seat.mine .dot { background: var(--mine-text); animation: pulse 2s infinite; }
+  .seat.blocked .dot { background: var(--blocked-text); }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: 0.3; }
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 12px;
+    margin-top: 28px; padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; border: 1.5px solid; }
+  .legend-dot.free { background: var(--free); border-color: var(--free-border); }
+  .legend-dot.booked { background: var(--booked); border-color: var(--booked-border); }
+  .legend-dot.mine { background: var(--mine); border-color: var(--mine-border); }
+  .legend-dot.blocked { background: var(--blocked); border-color: var(--blocked-border); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 32px;
+    width: 100%; max-width: 360px;
+    transform: translateY(20px) scale(0.97);
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+    position: relative;
+  }
+  .modal-overlay.show .modal { transform: none; }
+  .modal h2 { font-family: 'Unbounded', sans-serif; font-size: 18px; margin-bottom: 6px; }
+  .modal .sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+  .modal .info-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
+  .modal .info-row span:first-child { color: var(--muted); }
+  .modal .info-row span:last-child { font-weight: 500; }
+  .modal-btns { display: flex; gap: 10px; margin-top: 24px; }
+  .btn {
+    flex: 1; padding: 12px; border-radius: 12px; border: none;
+    font-family: 'Onest', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #7b74ff; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(108,99,255,0.4); }
+  .btn-danger { background: rgba(255,101,132,0.15); color: var(--accent2); border: 1px solid rgba(255,101,132,0.3); }
+  .btn-danger:hover { background: rgba(255,101,132,0.25); }
+  .btn-cancel { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .btn-cancel:hover { color: var(--text); border-color: var(--muted); }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 12px 24px; border-radius: 14px;
+    font-size: 13px; font-weight: 500;
+    transition: transform 0.4s cubic-bezier(.4,0,.2,1);
+    z-index: 200; white-space: nowrap;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--free-border); color: var(--free-text); }
+  .toast.cancel { border-color: var(--booked-border); color: var(--booked-text); }
+
+  @media (max-width: 500px) {
+    .room { padding: 18px; }
+    .cabinet-label { display: none; }
+    .seats-grid { gap: 10px; }
+    .seat-num { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">Workspace</div>
+    <h1>Бронирование <span>рабочих мест</span></h1>
+  </header>
+
+  <!-- DATE NAV -->
+  <div class="date-nav">
+    <button id="prevWeek">&#8249;</button>
+    <div class="date-strip" id="dateStrip"></div>
+    <button id="nextWeek">&#8250;</button>
+  </div>
+
+  <!-- NAME -->
+  <div class="name-row">
+    <label>Ваше имя</label>
+    <input class="name-input" id="userName" type="text" placeholder="Иван Иванов" />
+  </div>
+
+  <!-- ROOM -->
+  <div class="room-label">Зал — места 13–21</div>
+  <div class="room-wrap">
+    <div class="room">
+      <div class="seats-grid" id="seatsGrid"></div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot free"></div> Свободно</div>
+        <div class="legend-item"><div class="legend-dot booked"></div> Занято</div>
+        <div class="legend-item"><div class="legend-dot mine"></div> Моё</div>
+        <div class="legend-item"><div class="legend-dot blocked"></div> Недоступно</div>
+      </div>
+    </div>
+    <div class="cabinet-label"><span class="cabinet-arrow">←</span>кабинет</div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <h2 id="modalTitle">Место 00</h2>
+    <p class="sub" id="modalSub">Подтвердите бронирование</p>
+    <div class="info-row"><span>Дата</span><span id="modalDate">—</span></div>
+    <div class="info-row" id="modalOwnerRow"><span>Занято</span><span id="modalOwner">—</span></div>
+    <div class="modal-btns" id="modalBtns"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─── STATE ───────────────────────────────────────────────────────────────────
+  const BLOCKED = [14, 15];
+  const SEATS = [19,20,21, 16,17,18, 13,14,15]; // grid order (top-left → bottom-right)
+  
+  // bookings: { "YYYY-MM-DD": { seatNum: "Name" } }
+  let bookings = JSON.parse(localStorage.getItem('ws_bookings') || '{}');
+  
+  let selectedDate = todayStr();
+  let weekOffset = 0;
+  let pendingSeat = null;
+
+  function todayStr() {
+    return new Date().toISOString().slice(0, 10);
+  }
+  function save() {
+    localStorage.setItem('ws_bookings', JSON.stringify(bookings));
+  }
+
+  // ─── DATES ───────────────────────────────────────────────────────────────────
+  const WD = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const WD_EN = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  function renderDates() {
+    const strip = document.getElementById('dateStrip');
+    strip.innerHTML = '';
+    const base = new Date();
+    base.setDate(base.getDate() + weekOffset * 7);
+    // show 7 days starting Monday of current week
+    const day = base.getDay();
+    const monday = new Date(base);
+    monday.setDate(base.getDate() - (day === 0 ? 6 : day - 1));
+    
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const str = d.toISOString().slice(0, 10);
+      const chip = document.createElement('div');
+      chip.className = 'date-chip' + (str === selectedDate ? ' active' : '');
+      chip.innerHTML = `<div class="wd">${WD[d.getDay()]}</div><div class="d">${d.getDate()}</div>`;
+      chip.onclick = () => { selectedDate = str; renderDates(); renderSeats(); };
+      strip.appendChild(chip);
+    }
+  }
+
+  document.getElementById('prevWeek').onclick = () => { weekOffset--; renderDates(); };
+  document.getElementById('nextWeek').onclick = () => { weekOffset++; renderDates(); };
+
+  // ─── SEATS ───────────────────────────────────────────────────────────────────
+  function getState(seat) {
+    if (BLOCKED.includes(seat)) return 'blocked';
+    const owner = bookings[selectedDate]?.[seat];
+    if (!owner) return 'free';
+    const me = document.getElementById('userName').value.trim();
+    if (me && owner.toLowerCase() === me.toLowerCase()) return 'mine';
+    return 'booked';
+  }
+
+  function renderSeats() {
+    const grid = document.getElementById('seatsGrid');
+    grid.innerHTML = '';
+    SEATS.forEach(seat => {
+      const state = getState(seat);
+      const owner = bookings[selectedDate]?.[seat] || '';
+      const el = document.createElement('div');
+      el.className = `seat ${state}`;
+      el.innerHTML = `
+        <div class="dot"></div>
+        <div class="seat-num">${seat}</div>
+        ${state === 'booked' ? `<div class="seat-name">${owner}</div>` : ''}
+        ${state === 'mine' ? `<div class="seat-name">моё</div>` : ''}
+        ${state === 'free' ? `<div class="seat-name" style="opacity:.4">свободно</div>` : ''}
+        ${state === 'blocked' ? `<div class="seat-name">—</div>` : ''}
+      `;
+      if (state !== 'blocked' && state !== 'booked') {
+        el.onclick = () => openModal(seat, state);
+      }
+      grid.appendChild(el);
+    });
+  }
+
+  document.getElementById('userName').addEventListener('input', renderSeats);
+
+  // ─── MODAL ───────────────────────────────────────────────────────────────────
+  function fmtDate(str) {
+    const [y, m, d] = str.split('-');
+    const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+    return `${d} ${months[+m-1]} ${y}`;
+  }
+
+  function openModal(seat, state) {
+    pendingSeat = seat;
+    document.getElementById('modalTitle').textContent = `Место ${seat}`;
+    document.getElementById('modalDate').textContent = fmtDate(selectedDate);
+    const ownerRow = document.getElementById('modalOwnerRow');
+    const btns = document.getElementById('modalBtns');
+
+    if (state === 'mine') {
+      document.getElementById('modalSub').textContent = 'Вы забронировали это место';
+      ownerRow.style.display = 'flex';
+      document.getElementById('modalOwner').textContent = bookings[selectedDate][seat];
+      btns.innerHTML = `
+        <button class="btn btn-danger" id="cancelBtn">Отменить бронь</button>
+        <button class="btn btn-cancel" id="closeBtn">Закрыть</button>
+      `;
+      document.getElementById('cancelBtn').onclick = () => { doCancel(seat); closeModal(); };
+      document.getElementById('closeBtn').onclick = closeModal;
+    } else {
+      document.getElementById('modalSub').textContent = 'Забронировать на день?';
+      ownerRow.style.display = 'none';
+      btns.innerHTML = `
+        <button class="btn btn-primary" id="bookBtn">Забронировать</button>
+        <button class="btn btn-cancel" id="closeBtn">Отмена</button>
+      `;
+      document.getElementById('bookBtn').onclick = () => { doBook(seat); closeModal(); };
+      document.getElementById('closeBtn').onclick = closeModal;
+    }
+
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('show');
+  }
+  document.getElementById('modalOverlay').onclick = (e) => {
+    if (e.target === e.currentTarget) closeModal();
+  };
+
+  // ─── ACTIONS ─────────────────────────────────────────────────────────────────
+  function doBook(seat) {
+    const name = document.getElementById('userName').value.trim();
+    if (!name) { showToast('Введите ваше имя', 'cancel'); return; }
+    if (!bookings[selectedDate]) bookings[selectedDate] = {};
+    bookings[selectedDate][seat] = name;
+    save(); renderSeats();
+    showToast(`✓ Место ${seat} забронировано`, 'success');
+  }
+
+  function doCancel(seat) {
+    if (bookings[selectedDate]) {
+      delete bookings[selectedDate][seat];
+      save(); renderSeats();
+      showToast(`Бронь места ${seat} отменена`, 'cancel');
+    }
+  }
+
+  // ─── TOAST ───────────────────────────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast show ${type}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ─── INIT ─────────────────────────────────────────────────────────────────────
+  renderDates();
+  renderSeats();
+</script>
+</body>
+</html>
