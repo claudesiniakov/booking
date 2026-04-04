@@ -36,6 +36,66 @@
     --glow-free: rgba(46,122,46,0.08); --glow-mine: rgba(90,82,232,0.1);
     --bg-grad1: rgba(90,82,232,0.04); --bg-grad2: rgba(232,79,106,0.03);
   }
+  [data-theme="fallout"] {
+    --bg: #060a04; --surface: #0c1108; --surface2: #141f0e; --border: #1f3314;
+    --accent: #4af626; --accent2: #c8f040; --text: #a8e060; --muted: #4a7a28;
+    --free: #0a1a06; --free-border: #1a3a10; --free-text: #4af626;
+    --booked: #1a1400; --booked-border: #2a2800; --booked-text: #c8f040;
+    --blocked: #080a06; --blocked-border: #141a10; --blocked-text: #2a4a18;
+    --mine: #0a0a1a; --mine-border: #1a1a38; --mine-text: #7af040;
+    --zone-bg: #080c06; --zone-border: #141f0e;
+    --shadow: 0 2px 20px rgba(0,0,0,0.7);
+    --glow-free: rgba(74,246,38,0.15); --glow-mine: rgba(122,240,64,0.18);
+    --bg-grad1: rgba(74,246,38,0.05); --bg-grad2: rgba(200,240,64,0.03);
+  }
+  [data-theme="dark"] {
+    --bg: #0f0f13; --surface: #17171e; --surface2: #1e1e28; --border: #2a2a38;
+    --accent: #6c63ff; --accent2: #ff6584; --text: #e8e8f0; --muted: #6b6b80;
+    --free: #1a2a1a; --free-border: #2d4a2d; --free-text: #7ec87e;
+    --booked: #2a1a1a; --booked-border: #4a2d2d; --booked-text: #c87e7e;
+    --blocked: #161616; --blocked-border: #242424; --blocked-text: #3a3a3a;
+    --mine: #1a1a2e; --mine-border: #4a4a8a; --mine-text: #9090e0;
+    --zone-bg: #13131a; --zone-border: #222230;
+    --shadow: 0 2px 20px rgba(0,0,0,0.45);
+    --glow-free: rgba(126,200,126,0.12); --glow-mine: rgba(108,99,255,0.18);
+    --bg-grad1: rgba(108,99,255,0.07); --bg-grad2: rgba(255,101,132,0.05);
+  }
+  [data-theme="monokai"] {
+    --bg: #1a1b16; --surface: #23241e; --surface2: #2d2e26; --border: #3a3c30;
+    --accent: #a6e22e; --accent2: #f92672; --text: #f8f8f2; --muted: #75715e;
+    --free: #1e2f0e; --free-border: #3a5a1a; --free-text: #a6e22e;
+    --booked: #2f0e14; --booked-border: #5a1a2a; --booked-text: #f92672;
+    --blocked: #1a1a14; --blocked-border: #2d2e26; --blocked-text: #5c5a4f;
+    --mine: #1a1020; --mine-border: #3a1050; --mine-text: #ae81ff;
+    --zone-bg: #16170e; --zone-border: #2d2e26;
+    --shadow: 0 2px 20px rgba(0,0,0,0.5);
+    --glow-free: rgba(166,226,46,0.12); --glow-mine: rgba(174,129,255,0.18);
+    --bg-grad1: rgba(166,226,46,0.05); --bg-grad2: rgba(249,38,114,0.04);
+  }
+  [data-theme="nord"] {
+    --bg: #242933; --surface: #2e3440; --surface2: #3b4252; --border: #434c5e;
+    --accent: #88c0d0; --accent2: #bf616a; --text: #eceff4; --muted: #9099a8;
+    --free: #1f2e1f; --free-border: #3a5a3a; --free-text: #a3be8c;
+    --booked: #2e1f1f; --booked-border: #5a3a3a; --booked-text: #bf616a;
+    --blocked: #2a2e38; --blocked-border: #3b4252; --blocked-text: #616e88;
+    --mine: #1f2a38; --mine-border: #3a4a60; --mine-text: #81a1c1;
+    --zone-bg: #1e2430; --zone-border: #3b4252;
+    --shadow: 0 2px 20px rgba(0,0,0,0.4);
+    --glow-free: rgba(163,190,140,0.12); --glow-mine: rgba(136,192,208,0.18);
+    --bg-grad1: rgba(136,192,208,0.06); --bg-grad2: rgba(191,97,106,0.04);
+  }
+  [data-theme="github"] {
+    --bg: #f6f8fa; --surface: #ffffff; --surface2: #f0f2f5; --border: #d0d7de;
+    --accent: #0969da; --accent2: #cf222e; --text: #24292f; --muted: #656d76;
+    --free: #dafbe1; --free-border: #a8e6b8; --free-text: #1a7f37;
+    --booked: #ffebe9; --booked-border: #f0b0b0; --booked-text: #cf222e;
+    --blocked: #f0f0f0; --blocked-border: #d8d8d8; --blocked-text: #b8b8b8;
+    --mine: #dbeafe; --mine-border: #b0c8f0; --mine-text: #0550ae;
+    --zone-bg: #f6f8fa; --zone-border: #e4e9ef;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --glow-free: rgba(26,127,55,0.08); --glow-mine: rgba(9,105,218,0.1);
+    --bg-grad1: rgba(9,105,218,0.03); --bg-grad2: rgba(207,34,46,0.02);
+  }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -650,8 +710,12 @@
   html.setAttribute('data-theme', state.theme);
 
   const THEMES = [
-    { id: 'light', name: 'Light', desc: 'Светлая тема', bg: '#f0f0f5', accent: '#5a52e8' },
-    { id: 'dark',  name: 'Dark',  desc: 'Тёмная ночь',  bg: '#0f0f13', accent: '#6c63ff' },
+    { id: 'light',   name: 'Light',   desc: 'Светлая тема',    bg: '#f0f0f5', key: '#5a52e8', str: '#2e7a2e', num: '#d97706' },
+    { id: 'fallout', name: 'Fallout', desc: 'Терминал Убежища', bg: '#060a04', key: '#4af626', str: '#a8e060', num: '#7af040' },
+    { id: 'dark',    name: 'Dark',    desc: 'Тёмная ночь',     bg: '#0f0f13', key: '#6c63ff', str: '#7ec87e', num: '#ff6584' },
+    { id: 'monokai', name: 'Monokai', desc: 'Классика кода',   bg: '#1a1b16', key: '#a6e22e', str: '#e6db74', num: '#ae81ff' },
+    { id: 'nord',    name: 'Nord',    desc: 'Северное сияние', bg: '#242933', key: '#88c0d0', str: '#a3be8c', num: '#b48ead' },
+    { id: 'github',  name: 'GitHub',  desc: 'GitHub Light',    bg: '#f6f8fa', key: '#0969da', str: '#1a7f37', num: '#953800' },
   ];
 
   const themeDropdown  = document.getElementById('themeDropdown');
@@ -660,8 +724,12 @@
   const tpLabel        = document.getElementById('tpLabel');
 
   function buildSwatchHTML(t) {
-    return `<span style="display:flex;width:20px;height:20px;border-radius:4px;overflow:hidden;background:${t.bg};align-items:center;justify-content:center;">
-      <span style="width:10px;height:10px;border-radius:2px;background:${t.accent};"></span>
+    return `<span style="display:flex;width:20px;height:20px;border-radius:4px;overflow:hidden;position:relative;background:${t.bg};">
+      <span style="position:absolute;top:4px;left:4px;display:flex;flex-direction:column;gap:2px;">
+        <span style="width:11px;height:2px;border-radius:1px;background:${t.key};"></span>
+        <span style="width:8px;height:2px;border-radius:1px;background:${t.str};"></span>
+        <span style="width:6px;height:2px;border-radius:1px;background:${t.num};"></span>
+      </span>
     </span>`;
   }
 
@@ -679,7 +747,11 @@
     opt.dataset.theme = t.id;
     opt.innerHTML = `
       <div class="to-preview" style="background:${t.bg};">
-        <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:3px;background:${t.accent};"></span>
+        <span style="position:absolute;top:5px;left:6px;display:flex;flex-direction:column;gap:3px;">
+          <span style="width:20px;height:2px;border-radius:1px;background:${t.key};"></span>
+          <span style="width:14px;height:2px;border-radius:1px;background:${t.str};"></span>
+          <span style="width:10px;height:2px;border-radius:1px;background:${t.num};"></span>
+        </span>
       </div>
       <div><div class="to-name">${t.name}</div><div class="to-desc">${t.desc}</div></div>
       <span class="to-check">✓</span>
