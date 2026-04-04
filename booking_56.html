@@ -356,12 +356,31 @@
 
   .room-inner { flex: 1; display: flex; flex-direction: column; gap: 16px; }
 
-  /* zone cards (no header/title now) */
+  .zone-label {
+    font-size: 9px; font-family: 'Onest', sans-serif; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+    padding: 0 2px; margin-bottom: 2px;
+  }
+
   .zone {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 14px; padding: 14px 16px 12px;
     transition: background 0.3s, border-color 0.3s;
   }
+
+  /* вагончики */
+  .wagon-wrap {
+    display: flex; gap: 0; position: relative; margin-top: 12px;
+    background: var(--zone-bg); border: 1px solid var(--zone-border);
+    border-radius: 22px; padding: 16px 18px;
+    box-shadow: var(--shadow); transition: background 0.3s, border-color 0.3s;
+  }
+  .wagon-inner { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .wagon-title {
+    font-size: 9px; font-family: 'Onest', sans-serif; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+  }
+  .seats-row.cols2 { grid-template-columns: repeat(2, 1fr); }
 
   .seats-row { display: grid; gap: 11px; }
   .seats-row.cols3 { grid-template-columns: repeat(3, 1fr); }
@@ -661,11 +680,20 @@
         </div>
       </div>
       <div class="room-inner">
+        <div class="zone-label">Основная зона</div>
         <div class="zone">
           <div class="seats-row cols3" id="gridA"></div>
         </div>
         <div class="zone">
           <div class="seats-row cols3" id="gridB"></div>
+        </div>
+      </div>
+    </div>
+    <div class="wagon-wrap">
+      <div class="wagon-inner">
+        <div class="wagon-title">Вагончики</div>
+        <div class="zone">
+          <div class="seats-row cols2" id="gridC"></div>
         </div>
       </div>
     </div>
@@ -710,6 +738,7 @@
   const BLOCKED = [14, 15];
   const ZONE_A  = [19, 20, 21];
   const ZONE_B  = [16, 17, 18, 13, 14, 15];
+  const ZONE_C  = [1, 2];
   const WD_FULL  = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
   const WD_SHORT = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
   const MONTHS      = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
@@ -988,9 +1017,11 @@
   function renderSeats() {
     const gA = document.getElementById('gridA');
     const gB = document.getElementById('gridB');
-    gA.innerHTML = ''; gB.innerHTML = '';
+    const gC = document.getElementById('gridC');
+    gA.innerHTML = ''; gB.innerHTML = ''; gC.innerHTML = '';
     ZONE_A.forEach(s => gA.appendChild(makeSeat(s)));
     ZONE_B.forEach(s => gB.appendChild(makeSeat(s)));
+    ZONE_C.forEach(s => gC.appendChild(makeSeat(s)));
   }
 
   // ── RENDER BOOKINGS ──────────────────────────────────────────────────────────
