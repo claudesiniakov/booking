@@ -21,5 +21,6 @@ jobs:
             if [ ! -d .git ]; then
               git clone https://github.com/claudesiniakov/booking.git .
             else
+              git reset --hard HEAD
               git pull origin master
             fi
