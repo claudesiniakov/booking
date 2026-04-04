@@ -974,7 +974,7 @@
       return `<div class="seat-week-day s-${s}"${h}></div>`;
     }).join('');
 
-    const monthStr = MONTHS_FULL[+days[0].split('-')[1] - 1];
+    const monthStr = MONTHS_FULL[+state.selectedDate.split('-')[1] - 1];
     const el = document.createElement('div');
     el.className = `seat ${displayState}`;
     el.innerHTML = `<div class="dot"></div><div class="seat-month">${monthStr}</div><div class="seat-num">${seat}</div>${sub}<div class="seat-week">${segs}</div>`;
