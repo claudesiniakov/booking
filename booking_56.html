@@ -71,9 +71,30 @@
   header {
     grid-area: header;
     display: flex; align-items: center; justify-content: space-between;
+    height: 56px;
     margin-bottom: 20px; gap: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0 20px;
   }
-  h1 { font-family: 'Unbounded', sans-serif; font-size: clamp(14px, 2vw, 18px); font-weight: 700; line-height: 1; white-space: nowrap; flex-shrink: 0; }
+  .logo {
+    display: flex; align-items: center; gap: 8px;
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .logo-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+    animation: hpulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes hpulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; line-height: 1; white-space: nowrap; flex-shrink: 0; }
   h1 span { color: var(--accent); }
   .header-name {
     flex: 1; max-width: 260px;
@@ -496,7 +517,10 @@
 
   <!-- HEADER -->
   <header>
-    <h1>Бронирование <span>рабочих мест</span></h1>
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <h1>Бронирование <span>рабочих мест</span></h1>
+    </div>
     <input class="header-name" id="userName" type="text" placeholder="Ваше имя" />
     <button class="theme-btn" id="themeBtn" title="Сменить тему">
       <span class="theme-icon moon">🌙</span>
