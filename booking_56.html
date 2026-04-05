@@ -1222,8 +1222,9 @@
   // ── RENDER BOOKINGS ──────────────────────────────────────────────────────────
   function getFilteredDates() {
     const me = state.userName.toLowerCase();
+    const today = todayStr();
     let dates = Object.keys(state.bookings)
-      .filter(d => Object.keys(state.bookings[d] || {}).length > 0)
+      .filter(d => d >= today && Object.keys(state.bookings[d] || {}).length > 0)
       .sort();
 
     if (state.bFilter === 'week') {
