@@ -200,11 +200,15 @@
   .to-check { font-size: 12px; color: var(--accent); opacity: 0; flex-shrink: 0; }
   .theme-option.active .to-check { opacity: 1; }
 
-  /* ── DATE STRIP ── */
-  .date-nav {
-    grid-area: dates; position: relative;
-    display: flex; align-items: center; gap: 10px;
+  /* ── DATE ROW ── */
+  .date-row {
+    grid-area: dates;
+    display: flex; align-items: stretch; gap: 16px;
     margin-bottom: 28px;
+  }
+  .date-nav {
+    flex: 1; position: relative;
+    display: flex; align-items: center; gap: 10px;
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 18px; padding: 12px 18px;
     box-shadow: var(--shadow); transition: background 0.3s, border-color 0.3s;
@@ -306,12 +310,9 @@
   /* ── ZONE NAV (inline in date-nav) ── */
   .zone-nav {
     display: flex; align-items: center; gap: 8px; flex-shrink: 0;
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 13px; padding: 6px 8px;
-  }
-  .zone-nav-divider {
-    width: 1px; height: 36px; background: var(--border);
-    margin: 0 10px; flex-shrink: 0; opacity: 0.6;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 18px; padding: 12px 14px;
+    box-shadow: var(--shadow); transition: background 0.3s, border-color 0.3s;
   }
   .zone-nav-arrow {
     background: var(--surface); border: 1px solid var(--border);
@@ -725,8 +726,9 @@
 
 <div class="app">
 
-  <!-- DATES -->
-  <div class="date-nav">
+  <!-- DATES ROW -->
+  <div class="date-row">
+
     <div class="zone-nav">
       <button class="zone-nav-arrow" id="zonePrev">&#8249;</button>
       <div class="zone-nav-center">
@@ -736,19 +738,22 @@
       </div>
       <button class="zone-nav-arrow" id="zoneNext">&#8250;</button>
     </div>
-    <div class="zone-nav-divider"></div>
-    <div class="shift-hint-icon">
-      <span class="shift-hint-trigger">?</span>
-      <div class="shift-hint-popup">Shift + клик — выбрать несколько дат</div>
+
+    <div class="date-nav">
+      <div class="shift-hint-icon">
+        <span class="shift-hint-trigger">?</span>
+        <div class="shift-hint-popup">Shift + клик — выбрать несколько дат</div>
+      </div>
+      <button id="prevWeek">&#8249;</button>
+      <div class="date-strip" id="dateStrip"></div>
+      <button class="date-nav-btn" id="nextWeek">&#8250;</button>
+      <div class="date-nav-controls">
+        <span class="multisel-badge hidden" id="multiselBadge"></span>
+        <button class="multisel-clear hidden" id="multiselClear">Сбросить</button>
+        <button class="date-nav-btn today-btn" id="todayBtn">Сегодня</button>
+      </div>
     </div>
-    <button id="prevWeek">&#8249;</button>
-    <div class="date-strip" id="dateStrip"></div>
-    <button class="date-nav-btn" id="nextWeek">&#8250;</button>
-    <div class="date-nav-controls">
-      <span class="multisel-badge hidden" id="multiselBadge"></span>
-      <button class="multisel-clear hidden" id="multiselClear">Сбросить</button>
-      <button class="date-nav-btn today-btn" id="todayBtn">Сегодня</button>
-    </div>
+
   </div>
 
   <!-- FLOOR PLAN (zone slider) -->
