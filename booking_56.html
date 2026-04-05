@@ -165,6 +165,13 @@
 
   /* ── HEADER RIGHT ── */
   .header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: auto; }
+  .log-link {
+    font-family: 'Unbounded', sans-serif; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.12em; color: var(--muted); text-decoration: none;
+    border: 1px solid var(--border); border-radius: 7px; padding: 5px 10px;
+    transition: all 0.15s;
+  }
+  .log-link:hover { color: var(--accent); border-color: var(--accent); }
 
   /* ── THEME PICKER ── */
   .theme-picker { position: relative; }
@@ -721,6 +728,7 @@
   </div>
   <input class="header-name" id="userName" type="text" placeholder="Ваше имя" />
   <div class="header-right">
+    <a href="log.html" class="log-link">log</a>
     <div class="theme-picker" id="themePicker">
       <button class="theme-picker-btn" id="themePickerBtn">
         <span id="tpSwatch"></span>
@@ -874,11 +882,13 @@
       return d.items || [];
     },
     async create(date, seat, user_name) {
-      return fetch(`${PB}/api/collections/bookings/records`, {
+      const r = await fetch(`${PB}/api/collections/bookings/records`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({date, seat, user_name})
       });
+      if (r.ok) pbApi.log('book', user_name, seat, date);
+      return r;
     },
     async findAndDelete(date, seat) {
       const filter = encodeURIComponent(`date='${date}'&&seat=${seat}`);
@@ -886,7 +896,15 @@
       const d = await r.json();
       for (const rec of (d.items || [])) {
         await fetch(`${PB}/api/collections/bookings/records/${rec.id}`, { method: 'DELETE' });
+        pbApi.log('cancel', rec.user_name, seat, date);
       }
+    },
+    log(action, user_name, seat, date) {
+      fetch(`${PB}/api/collections/logs/records`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action, user_name, seat: +seat, date})
+      }).catch(() => {});
     }
   };
 
