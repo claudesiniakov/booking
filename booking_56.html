@@ -307,6 +307,9 @@
   .date-chip.weekend { opacity: 0.45; cursor: not-allowed; border-style: dashed; }
   .date-chip.weekend .wd { color: var(--muted); }
   .date-chip.weekend .d  { color: var(--muted); }
+  .date-chip.past { opacity: 0.35; cursor: not-allowed; }
+  .date-chip.past .wd { color: var(--muted); }
+  .date-chip.past .d  { color: var(--muted); text-decoration: line-through; }
 
 
   /* ── ZONE NAV (inline in date-nav) ── */
@@ -1092,15 +1095,17 @@
       const isPrimary = str === state.selectedDate;
       const isSelected = state.selectedDates.has(str);
 
+      const isPast = str < todayStr();
       const chip = document.createElement('div');
       let cls = 'date-chip';
       if (isPrimary)       cls += ' active';
       else if (isSelected) cls += ' selected';
       if (isWknd)          cls += ' weekend';
+      else if (isPast)     cls += ' past';
       chip.className = cls;
       chip.innerHTML = `<div class="wd">${WD_SHORT[dow]}</div><div class="d">${d.getDate()}</div>`;
 
-      if (!isWknd) {
+      if (!isWknd && !isPast) {
         chip.onclick = (e) => {
           e.preventDefault();
           if (e.shiftKey) window.getSelection()?.removeAllRanges();
