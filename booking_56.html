@@ -418,7 +418,8 @@
 
   /* вагончики */
   .zone-slide:last-child {
-    display: flex; justify-content: center; padding-top: 4px;
+    display: flex; flex-direction: column; align-items: center;
+    padding-top: 4px; gap: 16px;
   }
   .wagon-wrap {
     display: flex; gap: 0; position: relative;
@@ -426,6 +427,26 @@
     background: var(--zone-bg); border: 1px solid var(--zone-border);
     border-radius: 26px; padding: 24px 22px;
     box-shadow: var(--shadow); transition: background 0.3s, border-color 0.3s;
+  }
+  .wagon-wall {
+    margin: -24px -22px 14px;
+    height: 24px; border-radius: 26px 26px 0 0;
+    border-bottom: 1px solid var(--zone-border);
+    background:
+      repeating-linear-gradient(
+        -45deg,
+        transparent 0, transparent 5px,
+        var(--border) 5px, var(--border) 6px
+      );
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; flex-shrink: 0;
+  }
+  .wagon-wall-label {
+    font-size: 8px; font-family: 'Onest', sans-serif;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--muted); opacity: 0.7;
+    background: var(--zone-bg); padding: 0 10px;
+    position: relative;
   }
   .wagon-inner { flex: 1; display: flex; flex-direction: column; gap: 10px; }
   .wagon-zones-row { display: flex; gap: 14px; }
@@ -773,6 +794,7 @@
         <div class="zone-slide">
           <div class="wagon-wrap">
             <div class="wagon-inner">
+              <div class="wagon-wall"><span class="wagon-wall-label">Стена</span></div>
               <div class="wagon-title">Вагончики</div>
               <div class="wagon-zones-row">
                 <div class="zone">
@@ -783,6 +805,11 @@
                 </div>
               </div>
             </div>
+          </div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot free"></div>Свободно</div>
+            <div class="legend-item"><div class="legend-dot booked"></div>Занято</div>
+            <div class="legend-item"><div class="legend-dot mine"></div>Моё</div>
           </div>
         </div>
 
