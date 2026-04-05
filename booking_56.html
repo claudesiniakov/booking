@@ -415,14 +415,21 @@
   }
 
   /* вагончики */
+  .zone-slide:last-child {
+    display: flex; justify-content: center; padding-top: 4px;
+  }
   .wagon-wrap {
     display: flex; gap: 0; position: relative;
+    width: 480px; flex-shrink: 0;
     background: var(--zone-bg); border: 1px solid var(--zone-border);
     border-radius: 26px; padding: 24px 22px;
     box-shadow: var(--shadow); transition: background 0.3s, border-color 0.3s;
   }
   .wagon-inner { flex: 1; display: flex; flex-direction: column; gap: 10px; }
   .wagon-zones-row { display: flex; gap: 14px; }
+  .wagon-pairs .seat-pair .seat { font-size: 0; }
+  .wagon-pairs .seat-pair .seat .seat-num { font-size: 18px; }
+  .wagon-pairs .seat-pair .seat .seat-sub { font-size: 11px; }
   .wagon-title {
     font-size: 9px; font-family: 'Onest', sans-serif; font-weight: 500;
     letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
