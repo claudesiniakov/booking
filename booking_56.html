@@ -115,14 +115,14 @@
   .app {
     position: relative; z-index: 1;
     max-width: 1800px; margin: 0 auto;
-    padding: 32px 40px 80px;
+    padding: 20px 28px 48px;
     display: grid;
     grid-template-columns: 1fr 240px;
     grid-template-rows: auto 1fr;
     grid-template-areas:
       "dates   dates"
       "floor   bookings";
-    gap: 0 32px;
+    gap: 0 20px;
     align-items: start;
   }
 
@@ -203,8 +203,8 @@
   /* ── DATE ROW ── */
   .date-row {
     grid-area: dates;
-    display: flex; align-items: stretch; gap: 16px;
-    margin-bottom: 28px;
+    display: flex; align-items: stretch; gap: 12px;
+    margin-bottom: 16px;
   }
   .date-nav {
     flex: 1; position: relative;
@@ -403,7 +403,7 @@
     opacity: 0.5;
   }
 
-  .room-inner { flex: 1; display: flex; flex-direction: column; gap: 22px; }
+  .room-inner { flex: 1; display: flex; flex-direction: column; gap: 12px; }
 
   .zone-label {
     font-size: 9px; font-family: 'Onest', sans-serif; font-weight: 500;
@@ -420,7 +420,7 @@
   /* вагончики */
   .zone-slide:last-child {
     display: flex; flex-direction: column; align-items: center;
-    padding-top: 4px; gap: 16px;
+    padding-top: 4px; gap: 10px;
   }
   .wagon-wrap {
     display: flex; gap: 0; position: relative;
