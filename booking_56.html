@@ -422,6 +422,7 @@
     box-shadow: var(--shadow); transition: background 0.3s, border-color 0.3s;
   }
   .wagon-inner { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .wagon-zones-row { display: flex; gap: 14px; }
   .wagon-title {
     font-size: 9px; font-family: 'Onest', sans-serif; font-weight: 500;
     letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
@@ -762,11 +763,13 @@
           <div class="wagon-wrap">
             <div class="wagon-inner">
               <div class="wagon-title">Вагончики</div>
-              <div class="zone">
-                <div class="wagon-pairs" id="gridC1"></div>
-              </div>
-              <div class="zone">
-                <div class="wagon-pairs" id="gridC2"></div>
+              <div class="wagon-zones-row">
+                <div class="zone">
+                  <div class="wagon-pairs" id="gridC1"></div>
+                </div>
+                <div class="zone">
+                  <div class="wagon-pairs" id="gridC2"></div>
+                </div>
               </div>
             </div>
           </div>
