@@ -117,7 +117,7 @@
     max-width: 1800px; margin: 0 auto;
     padding: 32px 40px 80px;
     display: grid;
-    grid-template-columns: 1fr 480px;
+    grid-template-columns: 1fr 240px;
     grid-template-rows: auto auto 1fr;
     grid-template-areas:
       "dates    dates"
@@ -421,11 +421,18 @@
   }
 
   /* вагончики */
+  .wagon-slide-inner {
+    display: flex; justify-content: center; align-items: center;
+    min-height: 420px; padding: 20px 0;
+  }
   .wagon-wrap {
-    display: flex; gap: 0; position: relative; margin-top: 0;
+    display: flex; gap: 0; position: relative;
+    width: 360px; flex-shrink: 0;
     background: var(--zone-bg); border: 1px solid var(--zone-border);
     border-radius: 26px; padding: 24px 22px;
     box-shadow: var(--shadow); transition: background 0.3s, border-color 0.3s;
+    transform: rotate(90deg);
+    transform-origin: center center;
   }
   .wagon-inner { flex: 1; display: flex; flex-direction: column; gap: 10px; }
   .wagon-title {
@@ -437,8 +444,12 @@
   .seats-row { display: grid; gap: 14px; }
   .seats-row.cols3 { grid-template-columns: repeat(3, 1fr); }
 
-  /* wagon seats column */
+  /* wagon seats — paired column */
   .wagon-pairs { display: flex; flex-direction: column; gap: 14px; }
+  .seat-pair { display: flex; gap: 4px; }
+  .seat-pair .seat { flex: 1; aspect-ratio: 16/7; border-radius: 11px; }
+  .seat-pair .seat:first-child { border-radius: 9px 4px 4px 9px; }
+  .seat-pair .seat:last-child  { border-radius: 4px 9px 9px 4px; }
 
   /* ── SEAT ── */
   .seat {
@@ -754,11 +765,13 @@
 
         <!-- Slide 1: Вагончики -->
         <div class="zone-slide">
-          <div class="wagon-wrap">
-            <div class="wagon-inner">
-              <div class="wagon-title">Вагончики</div>
-              <div class="zone">
-                <div class="wagon-pairs" id="gridC"></div>
+          <div class="wagon-slide-inner">
+            <div class="wagon-wrap">
+              <div class="wagon-inner">
+                <div class="wagon-title">Вагончики</div>
+                <div class="zone">
+                  <div class="wagon-pairs" id="gridC"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -801,7 +814,7 @@
   const BLOCKED = [14, 15];
   const ZONE_A  = [19, 20, 21];
   const ZONE_B  = [16, 17, 18, 13, 14, 15];
-  const ZONE_C  = [4, 3, 2, 1];
+  const ZONE_C  = [1, 2, 3, 4];
   const WD_FULL  = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
   const WD_SHORT = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
   const MONTHS      = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
@@ -1084,7 +1097,13 @@
     gA.innerHTML = ''; gB.innerHTML = ''; gC.innerHTML = '';
     ZONE_A.forEach(s => gA.appendChild(makeSeat(s)));
     ZONE_B.forEach(s => gB.appendChild(makeSeat(s)));
-    ZONE_C.forEach(s => gC.appendChild(makeSeat(s)));
+    for (let i = 0; i < ZONE_C.length; i += 2) {
+      const pair = document.createElement('div');
+      pair.className = 'seat-pair';
+      pair.appendChild(makeSeat(ZONE_C[i]));
+      if (ZONE_C[i + 1] !== undefined) pair.appendChild(makeSeat(ZONE_C[i + 1]));
+      gC.appendChild(pair);
+    }
   }
 
   // ── RENDER BOOKINGS ──────────────────────────────────────────────────────────
