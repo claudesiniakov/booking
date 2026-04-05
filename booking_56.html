@@ -426,6 +426,11 @@
     font-size: 9px; font-family: 'Onest', sans-serif; font-weight: 500;
     letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
   }
+  .wagon-zone-label {
+    font-size: 9px; font-family: 'Onest', sans-serif; font-weight: 500;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    padding: 2px 2px 0; opacity: 0.6;
+  }
   .seats-row.cols2 { grid-template-columns: repeat(2, 1fr); }
 
   .seats-row { display: grid; gap: 14px; }
@@ -757,8 +762,13 @@
           <div class="wagon-wrap">
             <div class="wagon-inner">
               <div class="wagon-title">Вагончики</div>
+              <div class="wagon-zone-label">1 — 2</div>
               <div class="zone">
-                <div class="wagon-pairs" id="gridC"></div>
+                <div class="wagon-pairs" id="gridC1"></div>
+              </div>
+              <div class="wagon-zone-label">3 — 4</div>
+              <div class="zone">
+                <div class="wagon-pairs" id="gridC2"></div>
               </div>
             </div>
           </div>
@@ -1078,19 +1088,22 @@
   }
 
   function renderSeats() {
-    const gA = document.getElementById('gridA');
-    const gB = document.getElementById('gridB');
-    const gC = document.getElementById('gridC');
-    gA.innerHTML = ''; gB.innerHTML = ''; gC.innerHTML = '';
+    const gA  = document.getElementById('gridA');
+    const gB  = document.getElementById('gridB');
+    const gC1 = document.getElementById('gridC1');
+    const gC2 = document.getElementById('gridC2');
+    gA.innerHTML = ''; gB.innerHTML = ''; gC1.innerHTML = ''; gC2.innerHTML = '';
     ZONE_A.forEach(s => gA.appendChild(makeSeat(s)));
     ZONE_B.forEach(s => gB.appendChild(makeSeat(s)));
-    for (let i = 0; i < ZONE_C.length; i += 2) {
+    const makePair = (a, b, target) => {
       const pair = document.createElement('div');
       pair.className = 'seat-pair';
-      pair.appendChild(makeSeat(ZONE_C[i]));
-      if (ZONE_C[i + 1] !== undefined) pair.appendChild(makeSeat(ZONE_C[i + 1]));
-      gC.appendChild(pair);
-    }
+      pair.appendChild(makeSeat(a));
+      pair.appendChild(makeSeat(b));
+      target.appendChild(pair);
+    };
+    makePair(1, 2, gC1);
+    makePair(3, 4, gC2);
   }
 
   // ── RENDER BOOKINGS ──────────────────────────────────────────────────────────
