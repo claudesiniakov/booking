@@ -117,11 +117,11 @@
     max-width: 1200px; margin: 0 auto;
     padding: 24px 24px 64px;
     display: grid;
-    grid-template-columns: 1fr 320px;
+    grid-template-columns: 1fr auto 320px;
     grid-template-rows: auto 1fr;
     grid-template-areas:
-      "dates   dates"
-      "floor   bookings";
+      "dates   dates   dates"
+      "floor   wagon   bookings";
     gap: 0 24px;
     align-items: start;
   }
@@ -306,6 +306,7 @@
   /* ── NAME INPUT ── */
   /* ── FLOOR PLAN ── */
   .floor-col { grid-area: floor; }
+  .wagon-col { grid-area: wagon; }
 
   .room-wrap {
     display: flex; gap: 0; position: relative;
@@ -370,7 +371,7 @@
 
   /* вагончики */
   .wagon-wrap {
-    display: flex; gap: 0; position: relative; margin-top: 12px;
+    display: flex; gap: 0; position: relative; margin-top: 0;
     background: var(--zone-bg); border: 1px solid var(--zone-border);
     border-radius: 22px; padding: 16px 18px;
     box-shadow: var(--shadow); transition: background 0.3s, border-color 0.3s;
@@ -703,6 +704,16 @@
         </div>
       </div>
     </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot free"></div>Свободно</div>
+      <div class="legend-item"><div class="legend-dot booked"></div>Занято</div>
+      <div class="legend-item"><div class="legend-dot mine"></div>Моё</div>
+      <div class="legend-item"><div class="legend-dot blocked"></div>Недоступно</div>
+    </div>
+  </div>
+
+  <!-- WAGON ZONE -->
+  <div class="wagon-col">
     <div class="wagon-wrap">
       <div class="wagon-inner">
         <div class="wagon-title">Вагончики</div>
@@ -710,12 +721,6 @@
           <div class="wagon-pairs" id="gridC"></div>
         </div>
       </div>
-    </div>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot free"></div>Свободно</div>
-      <div class="legend-item"><div class="legend-dot booked"></div>Занято</div>
-      <div class="legend-item"><div class="legend-dot mine"></div>Моё</div>
-      <div class="legend-item"><div class="legend-dot blocked"></div>Недоступно</div>
     </div>
   </div>
 
