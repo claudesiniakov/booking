@@ -926,18 +926,28 @@
     connect();
   }
 
+  // ── UTILS ────────────────────────────────────────────────────────────────────
+  function escapeHtml(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   // ── STATE ────────────────────────────────────────────────────────────────────
   function todayStr() { return new Date().toISOString().slice(0, 10); }
 
   const state = {
     bookings:      {},
-    userName:      '',           // 1. username in state, not read from DOM in logic
+    userName:      localStorage.getItem('ws_user') || '',
     selectedDate:  todayStr(),
     selectedDates: new Set([todayStr()]),
     weekOffset:    0,
     bFilter:       'week',
     collapsed:     {},
     theme:         localStorage.getItem('ws_theme') || 'light',
+    activeZone:    0,
   };
 
   // ── THEME ────────────────────────────────────────────────────────────────────
@@ -1142,8 +1152,10 @@
 
   // ── RENDER SEATS ─────────────────────────────────────────────────────────────
   function makeSeat(seat) {
+    const el = document.createElement('div');
+    el.dataset.seat = seat;
+
     if (BLOCKED.includes(seat)) {
-      const el = document.createElement('div');
       el.className = 'seat blocked';
       el.innerHTML = `<div class="dot"></div><div class="seat-num">${seat}</div><div class="seat-sub">—</div>`;
       return el;
@@ -1157,17 +1169,7 @@
     const hasBooked = activeStates.includes('booked');
     const displayState = hasMine && !hasBooked ? 'mine' : hasBooked ? 'booked' : 'free';
 
-    let sub = '';
-    if (displayState === 'booked') {
-      const bd = activeDays.find(d => getState(seat, d) === 'booked');
-      sub = `<div class="seat-sub">${state.bookings[bd]?.[seat] || ''}</div>`;
-    } else if (displayState === 'mine') {
-      const md = activeDays.find(d => getState(seat, d) === 'mine');
-      sub = `<div class="seat-sub">${state.bookings[md]?.[seat] || 'моё'}</div>`;
-    } else {
-      sub = `<div class="seat-sub" style="opacity:.3">своб.</div>`;
-    }
-
+    const monthStr = MONTHS_FULL[+state.selectedDate.split('-')[1] - 1];
     const segs = days.map(d => {
       const dow = new Date(d).getDay();
       const s = (dow === 0 || dow === 6) ? 'weekend' : getState(seat, d);
@@ -1175,14 +1177,21 @@
       return `<div class="seat-week-day s-${s}"${h}></div>`;
     }).join('');
 
-    const monthStr = MONTHS_FULL[+state.selectedDate.split('-')[1] - 1];
-    const el = document.createElement('div');
     el.className = `seat ${displayState}`;
-    el.innerHTML = `<div class="dot"></div><div class="seat-month">${monthStr}</div><div class="seat-num">${seat}</div>${sub}<div class="seat-week">${segs}</div>`;
+    el.innerHTML = `<div class="dot"></div><div class="seat-month">${escapeHtml(monthStr)}</div><div class="seat-num">${seat}</div><div class="seat-sub"></div><div class="seat-week">${segs}</div>`;
 
-    if (displayState === 'free' || displayState === 'mine') {
-      el.onclick = () => openModal(seat, getState(seat, state.selectedDate));
+    const subEl = el.querySelector('.seat-sub');
+    if (displayState === 'booked') {
+      const bd = activeDays.find(d => getState(seat, d) === 'booked');
+      subEl.textContent = state.bookings[bd]?.[seat] || '';
+    } else if (displayState === 'mine') {
+      const md = activeDays.find(d => getState(seat, d) === 'mine');
+      subEl.textContent = state.bookings[md]?.[seat] || 'моё';
+    } else {
+      subEl.textContent = 'своб.';
+      subEl.style.opacity = '0.3';
     }
+
     return el;
   }
 
@@ -1269,13 +1278,15 @@
         const isMine = name.toLowerCase() === me;
         const row = document.createElement('div');
         row.className = 'b-row' + (isMine ? ' is-mine' : '');
+        const timeStr = dateStr === today ? 'сегодня' : fmtDateShort(dateStr).split(', ')[1] || '';
         row.innerHTML = `
-          <div class="b-seat-badge">${seat}</div>
+          <div class="b-seat-badge">${+seat}</div>
           <div class="b-info">
-            <div class="b-name">${name}</div>
-            <div class="b-time">${dateStr === today ? 'сегодня' : fmtDateShort(dateStr).split(', ')[1] || ''}</div>
+            <div class="b-name"></div>
+            <div class="b-time">${escapeHtml(timeStr)}</div>
           </div>
           ${isMine ? `<button class="b-cancel-btn" title="Отменить">✕</button>` : ''}`;
+        row.querySelector('.b-name').textContent = name;
         if (isMine) {
           row.querySelector('.b-cancel-btn').onclick = (e) => {
             e.stopPropagation();
@@ -1299,10 +1310,30 @@
   }
 
   // ── EVENT BINDINGS ───────────────────────────────────────────────────────────
-  // 1. Update userName in state on input
-  document.getElementById('userName').addEventListener('input', (e) => {
+  // Restore persisted user name
+  const userNameEl = document.getElementById('userName');
+  userNameEl.value = state.userName;
+
+  // Debounced render for input events
+  let _renderTimer;
+  function renderDebounced() {
+    clearTimeout(_renderTimer);
+    _renderTimer = setTimeout(render, 150);
+  }
+
+  userNameEl.addEventListener('input', (e) => {
     state.userName = e.target.value.trim();
-    render();
+    try { localStorage.setItem('ws_user', state.userName); } catch {}
+    renderDebounced();
+  });
+
+  // Delegated seat click on the track
+  document.getElementById('zoneTrack').addEventListener('click', (e) => {
+    const seatEl = e.target.closest('.seat');
+    if (!seatEl || !seatEl.dataset.seat) return;
+    const seat = +seatEl.dataset.seat;
+    const st = getState(seat, state.selectedDate);
+    if (st === 'free' || st === 'mine') openModal(seat, st);
   });
 
   document.getElementById('prevWeek').onclick = () => {
@@ -1416,8 +1447,6 @@
 
   // ── ZONE SLIDER ──────────────────────────────────────────────────────────────
   const ZONES = ['Основная зона', 'Вагончики'];
-  let activeZone = 0;
-
   function initZoneNav() {
     const dots = document.getElementById('zoneNavDots');
     dots.innerHTML = ZONES.map((_, i) =>
@@ -1429,24 +1458,24 @@
   }
 
   function goZone(idx) {
-    activeZone = ((idx % ZONES.length) + ZONES.length) % ZONES.length;
+    state.activeZone = ((idx % ZONES.length) + ZONES.length) % ZONES.length;
     const track = document.getElementById('zoneTrack');
-    track.style.transform = `translateX(-${activeZone * 100}%)`;
+    track.style.transform = `translateX(-${state.activeZone * 100}%)`;
 
     const nameEl = document.getElementById('zoneNavName');
     nameEl.classList.add('switching');
     setTimeout(() => {
-      nameEl.textContent = ZONES[activeZone];
+      nameEl.textContent = ZONES[state.activeZone];
       nameEl.classList.remove('switching');
     }, 150);
 
     document.querySelectorAll('.zone-nav-dot').forEach((d, i) =>
-      d.classList.toggle('active', i === activeZone)
+      d.classList.toggle('active', i === state.activeZone)
     );
   }
 
-  document.getElementById('zonePrev').addEventListener('click', () => goZone(activeZone - 1));
-  document.getElementById('zoneNext').addEventListener('click', () => goZone(activeZone + 1));
+  document.getElementById('zonePrev').addEventListener('click', () => goZone(state.activeZone - 1));
+  document.getElementById('zoneNext').addEventListener('click', () => goZone(state.activeZone + 1));
   initZoneNav();
 
   // ── INIT ─────────────────────────────────────────────────────────────────────
