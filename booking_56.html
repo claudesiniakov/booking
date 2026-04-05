@@ -473,11 +473,6 @@
     font-size: 9px; font-family: 'Onest', sans-serif; font-weight: 500;
     letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
   }
-  .wagon-zone-label {
-    font-size: 9px; font-family: 'Onest', sans-serif; font-weight: 500;
-    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
-    padding: 2px 2px 0; opacity: 0.6;
-  }
   .seats-row.cols2 { grid-template-columns: repeat(2, 1fr); }
 
   .seats-row { display: grid; gap: 14px; flex: 1; grid-auto-rows: 1fr; }
@@ -499,7 +494,17 @@
     position: relative; user-select: none; border: 1.5px solid; gap: 3px;
   }
   .seat-num { font-family: 'Unbounded', sans-serif; font-size: 28px; font-weight: 600; line-height: 1; }
-  .seat-sub { font-size: 13px; font-weight: 500; text-align: center; padding: 0 4px; letter-spacing: 0.02em; line-height: 1.3; }
+  .seat-sub { font-size: 13px; font-weight: 500; text-align: center; padding: 0 4px; letter-spacing: 0.02em; line-height: 1.3; max-width: calc(100% - 8px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ── RT indicator ── */
+  .rt-dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    background: var(--muted); transition: background 0.4s, box-shadow 0.4s;
+  }
+  .rt-dot.connected    { background: var(--free-text);   box-shadow: 0 0 5px var(--free-text); }
+  .rt-dot.connecting   { background: var(--yellow, #d97706); animation: rt-blink 0.8s step-end infinite; }
+  .rt-dot.disconnected { background: var(--booked-text); }
+  @keyframes rt-blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
   .seat-month {
     position: absolute; top: 8px; left: 10px;
     font-size: 9px; font-family: 'Onest', sans-serif; font-weight: 500;
@@ -536,9 +541,6 @@
   .seat.mine .dot    { background: var(--mine-text); animation: pulse 2s infinite; }
   .seat.blocked .dot { background: var(--blocked-text); }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
-
-  /* cabinet */
-
 
   /* legend */
   .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
@@ -621,7 +623,6 @@
     background: var(--accent); color: #fff;
     border-radius: 5px; padding: 1px 5px; font-size: 9px; font-weight: 600;
   }
-  .b-day-count.empty { background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
   .b-chevron {
     color: var(--muted); font-size: 9px; transition: transform 0.2s;
     width: 12px; text-align: center;
@@ -771,6 +772,7 @@
   <div class="logo">
     <div class="logo-dot"></div>
     <h1>Бронирование <span>рабочих мест</span></h1>
+    <div class="rt-dot connecting" id="rtDot" title="Подключение..."></div>
   </div>
   <input class="header-name" id="userName" type="text" placeholder="Ваше имя" />
   <div class="header-right">
@@ -978,9 +980,17 @@
     return b;
   }
 
+  function setRtDot(status) {
+    const dot = document.getElementById('rtDot');
+    if (!dot) return;
+    dot.className = `rt-dot ${status}`;
+    dot.title = { connected: 'Онлайн — данные синхронизированы', connecting: 'Подключение...', disconnected: 'Нет связи — переподключение...' }[status] || '';
+  }
+
   function subscribeRT() {
     let es, clientId;
     function connect() {
+      setRtDot('connecting');
       es = new EventSource(`${PB}/api/realtime`);
       es.addEventListener('PB_CONNECT', e => {
         clientId = JSON.parse(e.data).clientId;
@@ -988,7 +998,7 @@
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ clientId, subscriptions: ['bookings'] })
-        });
+        }).then(() => setRtDot('connected'));
       });
       es.addEventListener('bookings', e => {
         const { action, record: r } = JSON.parse(e.data);
@@ -1003,12 +1013,18 @@
         }
         render();
       });
-      es.onerror = () => { es.close(); setTimeout(connect, 5000); };
+      es.onerror = () => { es.close(); setRtDot('disconnected'); setTimeout(connect, 5000); };
     }
     connect();
   }
 
   // ── UTILS ────────────────────────────────────────────────────────────────────
+  function pluralDays(n) {
+    if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return `${n} дня`;
+    if (n % 10 === 1 && n % 100 !== 11) return `${n} день`;
+    return `${n} дней`;
+  }
+
   function escapeHtml(s) {
     return String(s ?? '')
       .replace(/&/g, '&amp;')
@@ -1225,7 +1241,7 @@
     const clear  = document.getElementById('multiselClear');
     const n = state.selectedDates.size;
     if (n > 1) {
-      badge.textContent = `${n} дня`;
+      badge.textContent = pluralDays(n);
       badge.classList.remove('hidden');
       clear.classList.remove('hidden');
     } else {
@@ -1472,7 +1488,7 @@
     if (seatState === 'mine') {
       const mineDates = datesList.filter(d => getState(seat, d) === 'mine');
       document.getElementById('modalSub').textContent =
-        mineDates.length > 1 ? `Забронировано на ${mineDates.length} дня` : 'Вы забронировали это место';
+        mineDates.length > 1 ? `Забронировано на ${pluralDays(mineDates.length)}` : 'Вы забронировали это место';
       renderModalDates(mineDates);
       ownerRow.style.display = 'flex';
       document.getElementById('modalOwner').textContent = state.bookings[mineDates[0]]?.[seat] || '—';
@@ -1486,7 +1502,7 @@
     } else {
       const freeDates = datesList.filter(d => getState(seat, d) === 'free');
       document.getElementById('modalSub').textContent =
-        freeDates.length > 1 ? `Забронировать на ${freeDates.length} дня?` : 'Забронировать на день?';
+        freeDates.length > 1 ? `Забронировать на ${pluralDays(freeDates.length)}?` : 'Забронировать на день?';
       renderModalDates(freeDates);
       ownerRow.style.display = 'none';
       btns.innerHTML = `<button class="btn btn-primary" id="bookBtn">Забронировать</button><button class="btn btn-cancel" id="closeBtn">Отмена</button>`;
@@ -1528,7 +1544,8 @@
     }
     try {
       await Promise.all(dates.map(d => pbApi.create(d, seat, state.userName)));
-      showToast(dates.length > 1 ? `✓ Место ${seat} забронировано на ${dates.length} дня` : `✓ Место ${seat} забронировано`, 'success');
+      showToast(dates.length > 1 ? `✓ Место ${seat} забронировано на ${pluralDays(dates.length)}` : `✓ Место ${seat} забронировано`, 'success');
+      window._statsTrack?.('book');
     } catch(e) {
       showToast('Ошибка при бронировании', 'cancel');
     }
@@ -1540,7 +1557,10 @@
     try {
       await pbApi.findAndDelete(date, seat);
       pbApi.log('cancel', user_name, seat, date);
-      if (!silent) showToast(`Бронь места ${seat} отменена`, 'cancel');
+      if (!silent) {
+        showToast(`Бронь места ${seat} отменена`, 'cancel');
+        window._statsTrack?.('cancel');
+      }
     } catch(e) {
       if (!silent) showToast('Ошибка при отмене', 'cancel');
     }
@@ -1620,11 +1640,6 @@
       save(); updateDisplay();
     };
   })();
-
-  const _origDoBook   = doBook;
-  const _origDoCancel = doCancel;
-  doBook = async function(...a) { await _origDoBook(...a); if (window._statsTrack) _statsTrack('book'); };
-  doCancel = async function(...a) { await _origDoCancel(...a); if (window._statsTrack && !a[2]) _statsTrack('cancel'); };
 
   // ── INIT ─────────────────────────────────────────────────────────────────────
   pbApi.list().then(records => {
