@@ -857,21 +857,76 @@
   const MONTHS      = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
   const MONTHS_FULL = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 
+  // ── POCKETBASE CLIENT ────────────────────────────────────────────────────────
+  const PB = '/pb';
+
+  const pbApi = {
+    async list() {
+      const r = await fetch(`${PB}/api/collections/bookings/records?perPage=2000&sort=date`);
+      const d = await r.json();
+      return d.items || [];
+    },
+    async create(date, seat, user_name) {
+      return fetch(`${PB}/api/collections/bookings/records`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({date, seat, user_name})
+      });
+    },
+    async findAndDelete(date, seat) {
+      const filter = encodeURIComponent(`date='${date}'&&seat=${seat}`);
+      const r = await fetch(`${PB}/api/collections/bookings/records?filter=${filter}`);
+      const d = await r.json();
+      for (const rec of (d.items || [])) {
+        await fetch(`${PB}/api/collections/bookings/records/${rec.id}`, { method: 'DELETE' });
+      }
+    }
+  };
+
+  function recordsToState(records) {
+    const b = {};
+    for (const r of records) {
+      if (!b[r.date]) b[r.date] = {};
+      b[r.date][r.seat] = r.user_name;
+    }
+    return b;
+  }
+
+  function subscribeRT() {
+    let es, clientId;
+    function connect() {
+      es = new EventSource(`${PB}/api/realtime`);
+      es.addEventListener('PB_CONNECT', e => {
+        clientId = JSON.parse(e.data).clientId;
+        fetch(`${PB}/api/realtime`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ clientId, subscriptions: ['bookings'] })
+        });
+      });
+      es.addEventListener('bookings', e => {
+        const { action, record: r } = JSON.parse(e.data);
+        if (action === 'create') {
+          if (!state.bookings[r.date]) state.bookings[r.date] = {};
+          state.bookings[r.date][r.seat] = r.user_name;
+        } else if (action === 'delete') {
+          if (state.bookings[r.date]) {
+            delete state.bookings[r.date][r.seat];
+            if (!Object.keys(state.bookings[r.date]).length) delete state.bookings[r.date];
+          }
+        }
+        render();
+      });
+      es.onerror = () => { es.close(); setTimeout(connect, 5000); };
+    }
+    connect();
+  }
+
   // ── STATE ────────────────────────────────────────────────────────────────────
   function todayStr() { return new Date().toISOString().slice(0, 10); }
 
-  // 4. try/catch for localStorage
-  function loadBookings() {
-    try { return JSON.parse(localStorage.getItem('ws_bookings3') || '{}'); }
-    catch { return {}; }
-  }
-  function save() {
-    try { localStorage.setItem('ws_bookings3', JSON.stringify(state.bookings)); }
-    catch (e) { console.warn('localStorage write failed', e); }
-  }
-
   const state = {
-    bookings:      loadBookings(),
+    bookings:      {},
     userName:      '',           // 1. username in state, not read from DOM in logic
     selectedDate:  todayStr(),
     selectedDates: new Set([todayStr()]),
@@ -1302,9 +1357,8 @@
       ownerRow.style.display = 'flex';
       document.getElementById('modalOwner').textContent = state.bookings[mineDates[0]]?.[seat] || '—';
       btns.innerHTML = `<button class="btn btn-danger" id="cancelBtn">Отменить ${mineDates.length > 1 ? 'все' : 'бронь'}</button><button class="btn btn-cancel" id="closeBtn">Закрыть</button>`;
-      document.getElementById('cancelBtn').onclick = () => {
-        mineDates.forEach(d => doCancel(seat, d, true));
-        render();
+      document.getElementById('cancelBtn').onclick = async () => {
+        await Promise.all(mineDates.map(d => doCancel(seat, d, true)));
         showToast(`Бронь места ${seat} отменена`, 'cancel');
         closeModal();
       };
@@ -1326,25 +1380,25 @@
   document.getElementById('modalOverlay').onclick = e => { if (e.target === e.currentTarget) closeModal(); };
 
   // ── ACTIONS ──────────────────────────────────────────────────────────────────
-  function doBook(seat, dates) {
+  async function doBook(seat, dates) {
     if (!state.userName) { showToast('Введите ваше имя', 'cancel'); return; }
     dates = (dates || [state.selectedDate]).filter(d => !isWeekend(d));
-    dates.forEach(d => {
-      if (!state.bookings[d]) state.bookings[d] = {};
-      state.bookings[d][seat] = state.userName;
-    });
-    save(); render();
-    showToast(dates.length > 1 ? `✓ Место ${seat} забронировано на ${dates.length} дня` : `✓ Место ${seat} забронировано`, 'success');
+    try {
+      await Promise.all(dates.map(d => pbApi.create(d, seat, state.userName)));
+      showToast(dates.length > 1 ? `✓ Место ${seat} забронировано на ${dates.length} дня` : `✓ Место ${seat} забронировано`, 'success');
+    } catch(e) {
+      showToast('Ошибка при бронировании', 'cancel');
+    }
   }
 
-  function doCancel(seat, date, silent) {
+  async function doCancel(seat, date, silent) {
     date = date || state.selectedDate;
-    if (state.bookings[date]) {
-      delete state.bookings[date][seat];
-      if (!Object.keys(state.bookings[date]).length) delete state.bookings[date];
-      save();
+    try {
+      await pbApi.findAndDelete(date, seat);
+      if (!silent) showToast(`Бронь места ${seat} отменена`, 'cancel');
+    } catch(e) {
+      if (!silent) showToast('Ошибка при отмене', 'cancel');
     }
-    if (!silent) { render(); showToast(`Бронь места ${seat} отменена`, 'cancel'); }
   }
 
   // ── TOAST ────────────────────────────────────────────────────────────────────
@@ -1392,7 +1446,14 @@
   initZoneNav();
 
   // ── INIT ─────────────────────────────────────────────────────────────────────
-  render();
+  pbApi.list().then(records => {
+    state.bookings = recordsToState(records);
+    subscribeRT();
+    render();
+  }).catch(() => {
+    // PB недоступен — показываем пустое состояние
+    render();
+  });
 </script>
 </body>
 </html>
