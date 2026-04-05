@@ -306,15 +306,17 @@
   /* ── ZONE NAV (inline in date-nav) ── */
   .zone-nav {
     display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 13px; padding: 6px 8px;
   }
   .zone-nav-divider {
-    width: 1px; height: 32px; background: var(--border);
-    margin: 0 6px; flex-shrink: 0;
+    width: 1px; height: 36px; background: var(--border);
+    margin: 0 10px; flex-shrink: 0; opacity: 0.6;
   }
   .zone-nav-arrow {
-    background: var(--surface2); border: 1px solid var(--border);
-    color: var(--text); width: 40px; height: 40px; flex-shrink: 0;
-    border-radius: 10px; cursor: pointer; font-size: 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); width: 34px; height: 34px; flex-shrink: 0;
+    border-radius: 8px; cursor: pointer; font-size: 18px;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.2s; user-select: none;
   }
