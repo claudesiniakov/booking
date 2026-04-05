@@ -704,6 +704,52 @@
   .btn-cancel { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
   .btn-cancel:hover { color: var(--text); border-color: var(--muted); }
 
+  /* ── STATS COUNTER ── */
+  .stats-pill {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 28px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0 10px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: default;
+    flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .stats-pill:hover { border-color: var(--accent); color: var(--text); }
+  .stats-pill .sp-item { display: flex; align-items: center; gap: 4px; }
+  .stats-pill .sp-sep { width: 1px; height: 12px; background: var(--border); }
+  .stats-pill .sp-val { font-weight: 600; font-size: 12px; color: var(--text); }
+  .stats-pill .sp-ico { font-size: 10px; opacity: 0.6; }
+  .stats-tooltip {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    min-width: 180px;
+    box-shadow: var(--shadow);
+    z-index: 200;
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+    pointer-events: none;
+    transition: opacity 0.15s, transform 0.15s cubic-bezier(.4,0,.2,1);
+    white-space: nowrap;
+  }
+  .stats-pill:hover .stats-tooltip { opacity: 1; transform: none; }
+  .stats-tooltip .st-title { font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .stats-tooltip .st-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 3px 0; font-size: 11px; color: var(--muted); }
+  .stats-tooltip .st-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+  .stats-tooltip .st-row .st-num { font-weight: 600; color: var(--text); font-size: 12px; }
+  .stats-tooltip .st-section-title { font-size: 9px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 10px; margin-bottom: 4px; }
+
   /* ── TOAST ── */
   .toast {
     position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(70px);
@@ -728,6 +774,22 @@
   </div>
   <input class="header-name" id="userName" type="text" placeholder="Ваше имя" />
   <div class="header-right">
+    <div class="stats-pill" id="statsPill">
+      <span class="sp-item"><span class="sp-ico">👤</span><span class="sp-val" id="spUsers">0</span></span>
+      <span class="sp-sep"></span>
+      <span class="sp-item"><span class="sp-ico">🔄</span><span class="sp-val" id="spSessions">0</span></span>
+      <span class="sp-sep"></span>
+      <span class="sp-item"><span class="sp-ico">⚡</span><span class="sp-val" id="spUsages">0</span></span>
+      <div class="stats-tooltip">
+        <div class="st-title">Статистика</div>
+        <div class="st-row"><span>Пользователи</span><span class="st-num" id="stUsers">0</span></div>
+        <div class="st-row"><span>Сессии</span><span class="st-num" id="stSessions">0</span></div>
+        <div class="st-row"><span>Всего действий</span><span class="st-num" id="stTotal">0</span></div>
+        <div class="st-section-title">По действиям</div>
+        <div class="st-row"><span>Бронирования</span><span class="st-num" id="stBook">0</span></div>
+        <div class="st-row"><span>Отмены</span><span class="st-num" id="stCancel">0</span></div>
+      </div>
+    </div>
     <a href="log.html" class="log-link">log</a>
     <div class="theme-picker" id="themePicker">
       <button class="theme-picker-btn" id="themePickerBtn">
@@ -1525,6 +1587,44 @@
   document.getElementById('zonePrev').addEventListener('click', () => goZone(state.activeZone - 1));
   document.getElementById('zoneNext').addEventListener('click', () => goZone(state.activeZone + 1));
   initZoneNav();
+
+  // ── STATS ─────────────────────────────────────────────────────────────────────
+  (function initStats() {
+    const LS = 'bk_stats', LU = 'bk_uid';
+    let uid = localStorage.getItem(LU);
+    if (!uid) { uid = Math.random().toString(36).slice(2, 10); localStorage.setItem(LU, uid); }
+    let stats;
+    try { stats = JSON.parse(localStorage.getItem(LS)) || {}; } catch { stats = {}; }
+    if (!stats.sessions) stats.sessions = 0;
+    if (!stats.uids)     stats.uids     = [];
+    if (!stats.actions)  stats.actions  = { book: 0, cancel: 0 };
+    if (!stats.uids.includes(uid)) stats.uids.push(uid);
+    stats.users = stats.uids.length;
+    stats.sessions++;
+    function save() { localStorage.setItem(LS, JSON.stringify(stats)); }
+    save();
+    function total() { return stats.actions.book + stats.actions.cancel; }
+    function updateDisplay() {
+      document.getElementById('spUsers').textContent    = stats.users;
+      document.getElementById('spSessions').textContent = stats.sessions;
+      document.getElementById('spUsages').textContent   = total();
+      document.getElementById('stUsers').textContent    = stats.users;
+      document.getElementById('stSessions').textContent = stats.sessions;
+      document.getElementById('stTotal').textContent    = total();
+      document.getElementById('stBook').textContent     = stats.actions.book;
+      document.getElementById('stCancel').textContent   = stats.actions.cancel;
+    }
+    updateDisplay();
+    window._statsTrack = function(action) {
+      stats.actions[action] = (stats.actions[action] || 0) + 1;
+      save(); updateDisplay();
+    };
+  })();
+
+  const _origDoBook   = doBook;
+  const _origDoCancel = doCancel;
+  doBook = async function(...a) { await _origDoBook(...a); if (window._statsTrack) _statsTrack('book'); };
+  doCancel = async function(...a) { await _origDoCancel(...a); if (window._statsTrack && !a[2]) _statsTrack('cancel'); };
 
   // ── INIT ─────────────────────────────────────────────────────────────────────
   pbApi.list().then(records => {
