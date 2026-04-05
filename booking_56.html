@@ -1450,7 +1450,8 @@
 
   async function doBook(seat, dates) {
     if (!state.userName) { showToast('Введите ваше имя', 'cancel'); return; }
-    dates = (dates || [state.selectedDate]).filter(d => !isWeekend(d));
+    dates = (dates || [state.selectedDate]).filter(d => !isWeekend(d) && d >= todayStr());
+    if (!dates.length) { showToast('Нельзя бронировать прошедшие даты', 'cancel'); return; }
     const conflicts = getConflictDates(seat, dates);
     if (conflicts.length) {
       const conflictSeat = Object.entries(state.bookings[conflicts[0]] || {})
