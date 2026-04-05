@@ -386,19 +386,8 @@
   .seats-row { display: grid; gap: 11px; }
   .seats-row.cols3 { grid-template-columns: repeat(3, 1fr); }
 
-  /* paired wagon seats */
+  /* wagon seats column */
   .wagon-pairs { display: flex; flex-direction: column; gap: 11px; }
-  .seat-pair { display: flex; gap: 3px; flex: 1; }
-  .seat-pair .seat {
-    flex: 1;
-    aspect-ratio: 7/9;
-    border-radius: 8px;
-  }
-  .seat-pair .seat:first-child { border-radius: 9px 4px 4px 9px; }
-  .seat-pair .seat:last-child  { border-radius: 4px 9px 9px 4px; }
-  .seat-pair .seat .seat-num { font-size: 16px; }
-  .seat-pair .seat .seat-week { gap: 2px; }
-  .seat-pair .seat .seat-week-day { width: 10px; }
 
   /* ── SEAT ── */
   .seat {
@@ -757,7 +746,7 @@
   const BLOCKED = [14, 15];
   const ZONE_A  = [19, 20, 21];
   const ZONE_B  = [16, 17, 18, 13, 14, 15];
-  const ZONE_C  = [1, 2, 3, 4];
+  const ZONE_C  = [4, 3, 2, 1];
   const WD_FULL  = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
   const WD_SHORT = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
   const MONTHS      = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
@@ -1040,14 +1029,7 @@
     gA.innerHTML = ''; gB.innerHTML = ''; gC.innerHTML = '';
     ZONE_A.forEach(s => gA.appendChild(makeSeat(s)));
     ZONE_B.forEach(s => gB.appendChild(makeSeat(s)));
-    // paired seats: [[1,2],[3,4]]
-    for (let i = 0; i < ZONE_C.length; i += 2) {
-      const pair = document.createElement('div');
-      pair.className = 'seat-pair';
-      pair.appendChild(makeSeat(ZONE_C[i]));
-      if (ZONE_C[i + 1] !== undefined) pair.appendChild(makeSeat(ZONE_C[i + 1]));
-      gC.appendChild(pair);
-    }
+    ZONE_C.forEach(s => gC.appendChild(makeSeat(s)));
   }
 
   // ── RENDER BOOKINGS ──────────────────────────────────────────────────────────
