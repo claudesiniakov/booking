@@ -1415,9 +1415,31 @@
   document.getElementById('modalOverlay').onclick = e => { if (e.target === e.currentTarget) closeModal(); };
 
   // ── ACTIONS ──────────────────────────────────────────────────────────────────
+  function getConflictDates(seat, dates) {
+    const me = state.userName.toLowerCase();
+    return dates.filter(d => {
+      const dayBookings = state.bookings[d] || {};
+      return Object.entries(dayBookings).some(
+        ([s, name]) => +s !== seat && name.toLowerCase() === me
+      );
+    });
+  }
+
   async function doBook(seat, dates) {
     if (!state.userName) { showToast('Введите ваше имя', 'cancel'); return; }
     dates = (dates || [state.selectedDate]).filter(d => !isWeekend(d));
+    const conflicts = getConflictDates(seat, dates);
+    if (conflicts.length) {
+      const conflictSeat = Object.entries(state.bookings[conflicts[0]] || {})
+        .find(([, name]) => name.toLowerCase() === state.userName.toLowerCase())?.[0];
+      showToast(
+        conflicts.length === 1
+          ? `У вас уже занято место ${conflictSeat} на этот день`
+          : `Конфликт: у вас уже есть бронь на ${conflicts.length} из выбранных дат`,
+        'cancel'
+      );
+      return;
+    }
     try {
       await Promise.all(dates.map(d => pbApi.create(d, seat, state.userName)));
       showToast(dates.length > 1 ? `✓ Место ${seat} забронировано на ${dates.length} дня` : `✓ Место ${seat} забронировано`, 'success');
