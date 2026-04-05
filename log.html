@@ -154,6 +154,15 @@
     text-align: center; padding: 80px;
     color: var(--muted); font-size: 12px;
   }
+
+  /* day group header row */
+  .day-group-row td {
+    background: var(--surface2); border-bottom: 1px solid var(--border);
+    font-family: 'Unbounded', sans-serif; font-size: 9px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted);
+    padding: 8px 12px;
+  }
+  .day-group-row td span { color: var(--accent); margin-left: 8px; font-size: 9px; }
 </style>
 </head>
 <body>
@@ -174,12 +183,15 @@
 
   <div class="filter-group" id="actionFilter">
     <button class="f-btn active" data-action="">Все</button>
-    <button class="f-btn" data-action="book">Бронь</button>
-    <button class="f-btn" data-action="cancel">Отмена</button>
+    <button class="f-btn" data-action="cancel">Отмены</button>
   </div>
 
   <input class="date-filter" type="date" id="dateFrom" title="С даты">
   <input class="date-filter" type="date" id="dateTo" title="По дату">
+
+  <div class="filter-group">
+    <button class="f-btn" id="groupBtn" data-grouped="0">По дням</button>
+  </div>
 
   <button class="clear-btn" id="clearBtn">Сбросить</button>
 </div>
@@ -210,15 +222,23 @@
   // ── THEME ──
   document.documentElement.setAttribute('data-theme', localStorage.getItem('ws_theme') || 'light');
 
+  // ── HELPERS ──
+  function yesterday() {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().slice(0, 10);
+  }
+
   // ── STATE ──
   let allLogs = [];
   let sortCol = 'created_at';
   let sortDir = -1; // -1 = desc, 1 = asc
+  let grouped = false;
 
   const filters = {
     search: '',
     action: '',
-    dateFrom: '',
+    dateFrom: yesterday(),
     dateTo: '',
   };
 
@@ -275,28 +295,43 @@
     }
     empty.style.display = 'none';
 
-    body.innerHTML = rows.map(r => {
-      const isBook = r.action === 'book';
-      const created = r.created_at ? new Date(r.created_at) : null;
-      const timeStr = created
-        ? created.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-        : '—';
-      const [y, m, d] = r.date.split('-');
-      const dateStr = `${+d}.${m}.${y}`;
-      return `<tr>
-        <td><span class="action-badge ${r.action}">${isBook ? '✓ Бронь' : '✕ Отмена'}</span></td>
-        <td><span class="seat-num">${+r.seat}</span></td>
-        <td><span class="user-name">${escHtml(r.user_name)}</span></td>
-        <td class="date-cell">${escHtml(dateStr)}</td>
-        <td class="time-cell">${escHtml(timeStr)}</td>
-      </tr>`;
-    }).join('');
+    if (grouped) {
+      const byDate = {};
+      rows.forEach(r => { (byDate[r.date] = byDate[r.date] || []).push(r); });
+      const dates = Object.keys(byDate).sort((a, b) => a > b ? -1 : 1);
+      body.innerHTML = dates.map(date => {
+        const [y, m, d] = date.split('-');
+        const dateStr = `${+d}.${m}.${y}`;
+        const groupRows = byDate[date];
+        const header = `<tr class="day-group-row"><td colspan="5">${escHtml(dateStr)}<span>${groupRows.length} зап.</span></td></tr>`;
+        return header + groupRows.map(r => rowHtml(r, true)).join('');
+      }).join('');
+    } else {
+      body.innerHTML = rows.map(r => rowHtml(r, false)).join('');
+    }
 
     updateSortArrows();
   }
 
   function escHtml(s) {
     return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function rowHtml(r, hideDate) {
+    const isBook = r.action === 'book';
+    const created = r.created_at ? new Date(r.created_at) : null;
+    const timeStr = created
+      ? created.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : '—';
+    const [y, m, d] = r.date.split('-');
+    const dateStr = `${+d}.${m}.${y}`;
+    return `<tr>
+      <td><span class="action-badge ${r.action}">${isBook ? '✓ Бронь' : '✕ Отмена'}</span></td>
+      <td><span class="seat-num">${+r.seat}</span></td>
+      <td><span class="user-name">${escHtml(r.user_name)}</span></td>
+      <td class="date-cell">${hideDate ? '—' : escHtml(dateStr)}</td>
+      <td class="time-cell">${escHtml(timeStr)}</td>
+    </tr>`;
   }
 
   // ── SORT HEADERS ──
@@ -338,9 +373,7 @@
     document.querySelectorAll('#actionFilter .f-btn').forEach(b => {
       b.className = 'f-btn';
       if (b === btn) {
-        if (!filters.action) b.classList.add('active');
-        else if (filters.action === 'book')   b.classList.add('book-active');
-        else b.classList.add('cancel-active');
+        b.classList.add(filters.action === 'cancel' ? 'cancel-active' : 'active');
       }
     });
     applyAndRender();
@@ -356,16 +389,26 @@
     applyAndRender();
   });
 
+  const groupBtn = document.getElementById('groupBtn');
+  groupBtn.addEventListener('click', () => {
+    grouped = !grouped;
+    groupBtn.classList.toggle('active', grouped);
+    applyAndRender();
+  });
+
   document.getElementById('clearBtn').onclick = () => {
-    filters.search = ''; filters.action = ''; filters.dateFrom = ''; filters.dateTo = '';
+    filters.search = ''; filters.action = ''; filters.dateFrom = yesterday(); filters.dateTo = '';
     document.getElementById('searchInput').value = '';
-    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateFrom').value = filters.dateFrom;
     document.getElementById('dateTo').value = '';
     document.querySelectorAll('#actionFilter .f-btn').forEach((b, i) => {
       b.className = 'f-btn' + (i === 0 ? ' active' : '');
     });
     applyAndRender();
   };
+
+  // init dateFrom input
+  document.getElementById('dateFrom').value = filters.dateFrom;
 
   loadLogs();
 </script>

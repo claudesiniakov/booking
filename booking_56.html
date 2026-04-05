@@ -896,7 +896,6 @@
       const d = await r.json();
       for (const rec of (d.items || [])) {
         await fetch(`${PB}/api/collections/bookings/records/${rec.id}`, { method: 'DELETE' });
-        pbApi.log('cancel', rec.user_name, seat, date);
       }
     },
     log(action, user_name, seat, date) {
@@ -1474,8 +1473,10 @@
 
   async function doCancel(seat, date, silent) {
     date = date || state.selectedDate;
+    const user_name = state.bookings[date]?.[seat] || state.userName;
     try {
       await pbApi.findAndDelete(date, seat);
+      pbApi.log('cancel', user_name, seat, date);
       if (!silent) showToast(`Бронь места ${seat} отменена`, 'cancel');
     } catch(e) {
       if (!silent) showToast('Ошибка при отмене', 'cancel');
